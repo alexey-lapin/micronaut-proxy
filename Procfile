@@ -1,1 +1,1 @@
-web: java -Dserver.port=${PORT} -jar build/libs/micronaut-proxy-*-all.jar
+web: java -Dmicronaut.server.port=${PORT} -jar build/libs/micronaut-proxy-*-all.jar
