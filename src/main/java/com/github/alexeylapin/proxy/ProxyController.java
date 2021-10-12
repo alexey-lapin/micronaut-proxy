@@ -34,7 +34,8 @@ public class ProxyController {
     public Publisher<HttpResponse<?>> get(@PathVariable String to, @PathVariable String path) {
         ProxyProperties proxy = proxies.get(to);
         if (proxy == null) {
-            return Mono.just(HttpResponse.badRequest("definition ["  + to + "] not found"));
+            return Mono.just(HttpResponse.badRequest("definition ["  + to + "] not found")
+                    .contentType(MediaType.TEXT_PLAIN_TYPE));
         }
 
         URI uri = UriBuilder.of("")
