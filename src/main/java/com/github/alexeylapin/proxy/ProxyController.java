@@ -36,6 +36,8 @@ public class ProxyController {
     public ProxyController(StreamingHttpClient httpClient, List<ProxyProperties> proxies) {
         this.httpClient = httpClient;
         this.proxies = proxies.stream().collect(Collectors.toMap(ProxyProperties::getName, Function.identity()));
+        logger.info("initialized proxies:");
+        logger.info(this.proxies.toString());
     }
 
     @ExecuteOn(TaskExecutors.IO)

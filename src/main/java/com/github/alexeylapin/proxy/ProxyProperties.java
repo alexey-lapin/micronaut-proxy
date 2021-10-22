@@ -61,4 +61,16 @@ public class ProxyProperties {
         this.to = to;
     }
 
+    @Override
+    public String toString() {
+        return "ProxyProperties{" +
+                "name='" + name + '\'' +
+                ", scheme='" + scheme + '\'' +
+                ", host='" + host + '\'' +
+                ", port=" + port +
+                ", from='" + from + '\'' +
+                ", to='" + to + '\'' +
+                '}';
+    }
+
 }
