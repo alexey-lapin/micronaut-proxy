@@ -1,1 +1,0 @@
-web: java -Dmicronaut.server.port=${PORT} -jar build/libs/micronaut-proxy-*-all.jar
