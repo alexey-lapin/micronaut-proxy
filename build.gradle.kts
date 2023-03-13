@@ -1,12 +1,18 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
-    id("io.micronaut.application") version "2.0.6"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.micronaut.application") version "3.7.5"
 }
 
 version = "0.1"
 
 repositories {
     mavenCentral()
+}
+
+graalvmNative {
+    toolchainDetection.set(false)
 }
 
 micronaut {
@@ -17,6 +23,10 @@ micronaut {
         annotations("com.github.alexeylapin.proxy.*")
     }
 }
+
+//tasks.named<DockerBuildImage>("dockerBuildNative") {
+//    images.add("")
+//}
 
 dependencies {
     compileOnly("io.micronaut.reactor:micronaut-reactor")
@@ -32,6 +42,6 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
