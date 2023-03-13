@@ -23,8 +23,12 @@ micronaut {
 }
 
 tasks.named<DockerBuildImage>("dockerBuildNative") {
-    images.add("lexlapin/${project.name}:latest")
-    images.add("lexlapin/${project.name}:${project.version}")
+    images.set(
+        listOf(
+            "${System.getenv("DOCKERHUB_USERNAME")}/${project.name}:latest",
+            "${System.getenv("DOCKERHUB_USERNAME")}/${project.name}:${project.version}"
+        )
+    )
 }
 
 dependencies {
