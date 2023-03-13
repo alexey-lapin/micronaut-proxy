@@ -5,8 +5,6 @@ plugins {
     id("io.micronaut.application") version "3.7.5"
 }
 
-version = "0.1"
-
 repositories {
     mavenCentral()
 }
@@ -24,9 +22,10 @@ micronaut {
     }
 }
 
-//tasks.named<DockerBuildImage>("dockerBuildNative") {
-//    images.add("")
-//}
+tasks.named<DockerBuildImage>("dockerBuildNative") {
+    images.add("lexlapin/${project.name}:latest")
+    images.add("lexlapin/${project.name}:${project.version}")
+}
 
 dependencies {
     compileOnly("io.micronaut.reactor:micronaut-reactor")
