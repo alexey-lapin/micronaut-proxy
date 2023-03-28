@@ -15,30 +15,29 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Filter("/proxy4/**")
+@Filter("/proxy/**")
 public class ProxyFilter implements HttpServerFilter {
 
     private final ProxyHttpClient client;
     private final Map<String, ProxyProperties> proxies;
 
-    public ProxyFilter(ProxyHttpClient client, List<ProxyProperties> proxies) { // (2)
+    public ProxyFilter(ProxyHttpClient client, List<ProxyProperties> proxies) {
         this.client = client;
         this.proxies = proxies.stream().collect(Collectors.toMap(ProxyProperties::getName, Function.identity()));
     }
 
     @Override
-    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request,
-                                                      ServerFilterChain chain) {
-        return Publishers.map(client.proxy( // (3)
-                request.mutate() // (4)
+    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+        return Publishers.map(client.proxy(
+                request.mutate()
                         .uri(b -> {
-                                    String[] r = Arrays.stream(request.getPath().substring("/proxy4".length())
+                                    String[] r = Arrays.stream(request.getPath().substring("/proxy".length())
                                                     .split("/"))
                                             .filter(s -> s != null && !s.isEmpty())
                                             .toArray(String[]::new);
                                     ProxyProperties p = proxies.get(r[0]);
 
-                                    b // (5)
+                                    b
                                             .scheme(p.getScheme())
                                             .host(p.getHost())
                                             .port(p.getPort())
@@ -46,16 +45,14 @@ public class ProxyFilter implements HttpServerFilter {
                                             .path(String.join("/", Arrays.copyOfRange(r, 1, r.length)));
                                 }
                         )
-                        .header("X-My-Request-Header", "XXX") // (6)
+                        .header("X-My-Request-Header", "XXX")
         ), response -> response.header("X-My-Response-Header", "YYY")
                 .headers(h -> {
                     h.asMap().keySet().stream()
-                            .filter(k -> {
-                                return k.toLowerCase().startsWith("x-")
-                                        || k.toLowerCase().startsWith("server")
-                                        || k.toLowerCase().startsWith("via")
-                                        || k.toLowerCase().startsWith("e");
-                            })
+                            .filter(k -> k.toLowerCase().startsWith("x-")
+                                    || k.toLowerCase().startsWith("server")
+                                    || k.toLowerCase().startsWith("via")
+                                    || k.toLowerCase().startsWith("e"))
                             .forEach(h::remove);
                 }));
     }
