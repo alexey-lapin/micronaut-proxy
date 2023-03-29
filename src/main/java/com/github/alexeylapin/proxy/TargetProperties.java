@@ -3,8 +3,8 @@ package com.github.alexeylapin.proxy;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 
-@EachProperty("proxy")
-public class ProxyProperties {
+@EachProperty("micronaut-proxy.targets")
+public class TargetProperties {
 
     private final String name;
     private String scheme = "http";
@@ -13,7 +13,7 @@ public class ProxyProperties {
     private String from = "";
     private String to = "";
 
-    public ProxyProperties(@Parameter String name) {
+    public TargetProperties(@Parameter String name) {
         this.name = name;
     }
 
@@ -49,10 +49,6 @@ public class ProxyProperties {
         return from;
     }
 
-    public void setFrom(String from) {
-        this.from = from;
-    }
-
     public String getTo() {
         return to;
     }
@@ -61,16 +57,8 @@ public class ProxyProperties {
         this.to = to;
     }
 
-    @Override
-    public String toString() {
-        return "ProxyProperties{" +
-                "name='" + name + '\'' +
-                ", scheme='" + scheme + '\'' +
-                ", host='" + host + '\'' +
-                ", port=" + port +
-                ", from='" + from + '\'' +
-                ", to='" + to + '\'' +
-                '}';
-    }
-
 }
+//@EachProperty("micronaut-proxy.targets")
+//public record TargetProperties(@Parameter String name, String scheme, String host, int port, String from, String to) {
+//
+//}

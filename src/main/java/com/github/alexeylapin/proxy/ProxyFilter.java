@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 public class ProxyFilter implements HttpServerFilter {
 
     private final ProxyHttpClient client;
-    private final Map<String, ProxyProperties> proxies;
+    private final Map<String, TargetProperties> targets;
 
-    public ProxyFilter(ProxyHttpClient client, List<ProxyProperties> proxies) {
+    public ProxyFilter(ProxyHttpClient client, List<TargetProperties> targets, MicronautProxyProperties p) {
         this.client = client;
-        this.proxies = proxies.stream().collect(Collectors.toMap(ProxyProperties::getName, Function.identity()));
+        this.targets = targets.stream().collect(Collectors.toMap(TargetProperties::getName, Function.identity()));
     }
 
     @Override
@@ -35,7 +35,7 @@ public class ProxyFilter implements HttpServerFilter {
                                                     .split("/"))
                                             .filter(s -> s != null && !s.isEmpty())
                                             .toArray(String[]::new);
-                                    ProxyProperties p = proxies.get(r[0]);
+                                    TargetProperties p = targets.get(r[0]);
 
                                     b
                                             .scheme(p.getScheme())
