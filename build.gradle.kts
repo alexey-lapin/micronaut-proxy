@@ -25,8 +25,8 @@ micronaut {
 tasks.named<DockerBuildImage>("dockerBuildNative") {
     images.set(
         listOf(
-            "${System.getenv("DOCKERHUB_USERNAME")}/${project.name}:latest",
-            "${System.getenv("DOCKERHUB_USERNAME")}/${project.name}:${project.version}"
+            "${System.getenv("CR_NAMESPACE")}/${project.name}:latest",
+            "${System.getenv("CR_NAMESPACE")}/${project.name}:${project.version}"
         )
     )
 }
