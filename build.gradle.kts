@@ -12,7 +12,7 @@ repositories {
 graalvmNative {
     toolchainDetection.set(true)
     binaries {
-        main {
+        named("main") {
             buildArgs.add("-H:-UseContainerSupport")
         }
     }
