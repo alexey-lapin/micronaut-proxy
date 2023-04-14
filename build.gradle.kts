@@ -10,7 +10,12 @@ repositories {
 }
 
 graalvmNative {
-    toolchainDetection.set(false)
+    toolchainDetection.set(true)
+    binaries {
+        main {
+            buildArgs.add("-H:-UseContainerSupport")
+        }
+    }
 }
 
 micronaut {
