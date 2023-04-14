@@ -21,7 +21,7 @@ public class ProxyFilter implements HttpServerFilter {
     private final ProxyHttpClient client;
     private final Map<String, TargetProperties> targets;
 
-    public ProxyFilter(ProxyHttpClient client, List<TargetProperties> targets, MicronautProxyProperties p) {
+    public ProxyFilter(ProxyHttpClient client, List<TargetProperties> targets) {
         this.client = client;
         this.targets = targets.stream().collect(Collectors.toMap(TargetProperties::getName, Function.identity()));
     }
