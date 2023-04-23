@@ -8,6 +8,8 @@ import io.micronaut.http.client.ProxyHttpClient;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,12 +20,15 @@ import java.util.stream.Collectors;
 @Filter("/proxy/**")
 public class ProxyFilter implements HttpServerFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(ProxyFilter.class);
+
     private final ProxyHttpClient client;
     private final Map<String, TargetProperties> targets;
 
     public ProxyFilter(ProxyHttpClient client, List<TargetProperties> targets) {
         this.client = client;
         this.targets = targets.stream().collect(Collectors.toMap(TargetProperties::getName, Function.identity()));
+        log.info("targets: {}", this.targets);
     }
 
     @Override
