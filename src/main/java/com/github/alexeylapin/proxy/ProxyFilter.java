@@ -17,17 +17,19 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Filter("/proxy/**")
+@Filter("${micronaut-proxy.targeted-path}")
 public class ProxyFilter implements HttpServerFilter {
 
     private static final Logger log = LoggerFactory.getLogger(ProxyFilter.class);
 
     private final ProxyHttpClient client;
     private final Map<String, TargetProperties> targets;
+    private final MicronautProxyProperties properties;
 
-    public ProxyFilter(ProxyHttpClient client, List<TargetProperties> targets) {
+    public ProxyFilter(ProxyHttpClient client, List<TargetProperties> targets, MicronautProxyProperties properties) {
         this.client = client;
-        this.targets = targets.stream().collect(Collectors.toMap(TargetProperties::getName, Function.identity()));
+        this.targets = targets.stream().collect(Collectors.toMap(TargetProperties::name, Function.identity()));
+        this.properties = properties;
         log.info("targets: {}", this.targets);
     }
 
@@ -36,17 +38,17 @@ public class ProxyFilter implements HttpServerFilter {
         return Publishers.map(client.proxy(
                 request.mutate()
                         .uri(b -> {
-                                    String[] r = Arrays.stream(request.getPath().substring("/proxy".length())
+                                    String[] r = Arrays.stream(request.getPath().substring(properties.targetedPath().length())
                                                     .split("/"))
                                             .filter(s -> s != null && !s.isEmpty())
                                             .toArray(String[]::new);
                                     TargetProperties p = targets.get(r[0]);
 
                                     b
-                                            .scheme(p.getScheme())
-                                            .host(p.getHost())
-                                            .port(p.getPort())
-                                            .replacePath(p.getTo())
+                                            .scheme(p.scheme())
+                                            .host(p.host())
+                                            .port(p.port())
+                                            .replacePath(p.to())
                                             .path(String.join("/", Arrays.copyOfRange(r, 1, r.length)));
                                 }
                         )

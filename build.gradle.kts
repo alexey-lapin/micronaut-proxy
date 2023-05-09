@@ -28,10 +28,12 @@ micronaut {
 }
 
 tasks.named<DockerBuildImage>("dockerBuildNative") {
+    val registry = System.getenv("CR_REGISTRY")
+    val namespace = System.getenv("CR_NAMESPACE")
     images.set(
         listOf(
-            "${System.getenv("CR_REGISTRY")}/${System.getenv("CR_NAMESPACE")}/${project.name}:latest",
-            "${System.getenv("CR_REGISTRY")}/${System.getenv("CR_NAMESPACE")}/${project.name}:${project.version}"
+            "${registry}/${namespace}/${project.name}:latest",
+            "${registry}/${namespace}/${project.name}:${project.version}"
         )
     )
 }
