@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Filter("${micronaut-proxy.targeted-path}")
+@Filter("/${micronaut-proxy.targeted-path}/**")
 public class ProxyFilter implements HttpServerFilter {
 
     private static final Logger log = LoggerFactory.getLogger(ProxyFilter.class);
@@ -38,8 +38,10 @@ public class ProxyFilter implements HttpServerFilter {
         return Publishers.map(client.proxy(
                 request.mutate()
                         .uri(b -> {
-                                    String[] r = Arrays.stream(request.getPath().substring(properties.targetedPath().length())
-                                                    .split("/"))
+                            int length = properties.targetedPath().length() + 1;
+                            String substring = request.getPath().substring(length);
+                            String[] r = Arrays.stream(substring
+                                            .split("/"))
                                             .filter(s -> s != null && !s.isEmpty())
                                             .toArray(String[]::new);
                                     TargetProperties p = targets.get(r[0]);
