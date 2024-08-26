@@ -1,5 +1,0 @@
-micronaut:
-  http:
-    client:
-      max-content-length: 300mb
-      read-timeout: 5m

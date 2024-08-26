@@ -1,21 +1,17 @@
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("io.micronaut.application") version "3.7.5"
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.micronaut.application)
 }
 
-repositories {
-    mavenCentral()
+application {
+    mainClass.set("com.github.alexeylapin.proxy.Application")
 }
 
-graalvmNative {
-    toolchainDetection.set(true)
-    binaries {
-        named("main") {
-            buildArgs.add("-H:-UseContainerSupport")
-        }
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 micronaut {
@@ -27,6 +23,25 @@ micronaut {
     }
 }
 
+graalvmNative {
+    toolchainDetection.set(true)
+    binaries {
+        named("main") {
+            buildArgs.add("-H:-UseContainerSupport")
+        }
+    }
+}
+
+dependencies {
+    annotationProcessor(mn.micronaut.serde.processor)
+
+    implementation(mn.micronaut.http.client)
+    implementation(mn.micronaut.reactor)
+    implementation(mn.micronaut.serde.jackson)
+
+    runtimeOnly(mn.logback.classic)
+}
+
 tasks.named<DockerBuildImage>("dockerBuildNative") {
     val registry = System.getenv("CR_REGISTRY")
     val namespace = System.getenv("CR_NAMESPACE")
@@ -36,22 +51,4 @@ tasks.named<DockerBuildImage>("dockerBuildNative") {
             "${registry}/${namespace}/${project.name}:${project.version}"
         )
     )
-}
-
-dependencies {
-    compileOnly("io.micronaut.reactor:micronaut-reactor")
-
-    implementation("io.micronaut:micronaut-http-client")
-    implementation("io.micronaut:micronaut-runtime")
-
-    runtimeOnly("ch.qos.logback:logback-classic")
-}
-
-application {
-    mainClass.set("com.github.alexeylapin.proxy.Application")
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
 }
