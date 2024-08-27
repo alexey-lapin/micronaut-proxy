@@ -1,4 +1,4 @@
-package com.github.alexeylapin.proxy;
+package com.github.alexeylapin.proxy.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 
