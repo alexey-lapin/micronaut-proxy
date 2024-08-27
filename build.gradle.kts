@@ -1,9 +1,15 @@
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
+import org.gradle.internal.os.OperatingSystem
 
 plugins {
-    alias(libs.plugins.shadow)
     alias(libs.plugins.micronaut.application)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.release)
 }
+
+version = scmVersion.version
 
 application {
     mainClass.set("com.github.alexeylapin.proxy.Application")
@@ -28,6 +34,7 @@ graalvmNative {
     binaries {
         named("main") {
             buildArgs.add("-H:-UseContainerSupport")
+            buildArgs.add("--verbose")
         }
     }
 }
@@ -42,13 +49,55 @@ dependencies {
     runtimeOnly(mn.logback.classic)
 }
 
-tasks.named<DockerBuildImage>("dockerBuildNative") {
-    val registry = System.getenv("CR_REGISTRY")
-    val namespace = System.getenv("CR_NAMESPACE")
-    images.set(
-        listOf(
-            "${registry}/${namespace}/${project.name}:latest",
-            "${registry}/${namespace}/${project.name}:${project.version}"
+tasks {
+
+    named<ShadowJar>("shadowJar") {
+        archiveFileName.set("${rootProject.name}-${archiveVersion.get()}.${archiveExtension.get()}")
+        dependsOn("distTar", "distZip")
+    }
+
+    named("jar") {
+        enabled = false
+    }
+
+    named("runnerJar") {
+        enabled = false
+    }
+
+    named<DockerBuildImage>("dockerBuildNative") {
+        val registry = System.getenv("CR_REGISTRY")
+        val namespace = System.getenv("CR_NAMESPACE")
+        images.set(
+            listOf(
+                "${registry}/${namespace}/${project.name}:latest",
+                "${registry}/${namespace}/${project.name}:${project.version}"
+            )
         )
-    )
+    }
+
+    val writeArtifactFile by registering {
+        doLast {
+            val outputDirectory = getByName<BuildNativeImageTask>("nativeCompile").outputDirectory
+            outputDirectory.get().asFile.mkdirs()
+            outputDirectory.file("gradle-artifact.txt")
+                .get().asFile
+                .writeText("${rootProject.name}-${project.version}-${platform()}")
+        }
+    }
+
+    named("nativeCompile") {
+        finalizedBy(writeArtifactFile)
+    }
+
+}
+
+fun platform(): String {
+    val os = OperatingSystem.current()
+    val arc = System.getProperty("os.arch")
+    return when {
+        OperatingSystem.current().isWindows -> "windows-${arc}"
+        OperatingSystem.current().isLinux -> "linux-${arc}"
+        OperatingSystem.current().isMacOsX -> "darwin-${arc}"
+        else -> os.nativePrefix
+    }
 }
