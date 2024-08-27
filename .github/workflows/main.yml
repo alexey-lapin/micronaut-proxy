@@ -13,30 +13,154 @@ on:
 env:
   CR_REGISTRY: ghcr.io
   CR_NAMESPACE: ${{ github.repository_owner }}
+  CR_USERNAME: ${{ github.actor }}
+  CR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  build:
+  build-jvm:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout project sources
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Gradle build
+        run: ./gradlew build
+
+      - name: Upload app-jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: |
+            build/libs/micronaut-proxy*.jar
+          retention-days: 7
+
+  build-native:
+    strategy:
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-20.04
+            artifact: app-native-linux
+          - name: windows
+            os: windows-latest
+            artifact: app-native-windows
+          - name: macos
+            os: macos-latest
+            artifact: app-native-macos
+    runs-on: ${{ matrix.os }}
+    name: build-native-${{ matrix.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'liberica'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Gradle nativeCompile
+        run: ./gradlew nativeCompile -x check
+
+      - name: Upload app-native
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            build/native/nativeCompile/micronaut-proxy*
+            build/native/nativeCompile/gradle-artifact.txt
+
+  release-notes:
+    runs-on: ubuntu-latest
+    needs: [build-jvm, build-native]
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Prepare Linux Artifacts
+        run: |
+          cd app-native-linux
+          chmod +x micronaut-proxy
+          tar -czf $(cat gradle-artifact.txt).tar.gz micronaut-proxy
+
+      - name: Prepare macOS Artifacts
+        run: |
+          cd app-native-macos
+          chmod +x micronaut-proxy
+          tar -czf $(cat gradle-artifact.txt).tar.gz micronaut-proxy
+
+      - name: Prepare Windows Artifacts
+        run: |
+          cd app-native-windows
+          zip $(cat gradle-artifact.txt).zip micronaut-proxy.exe
+
+      - name: Build Changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          outputFile: changelog.txt
+          configuration: ".github/release-changelog-builder.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: changelog.txt
+          draft: true
+          files: |
+            app-jar/*.jar
+            app-native-linux/*.tar.gz
+            app-native-macos/*.tar.gz
+            app-native-windows/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-docker:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Login to Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.CR_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ env.CR_USERNAME }}
+          password: ${{ env.CR_PASSWORD }}
 
-      - name: Gradle publish
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Gradle dockerPushNative
         run: ./gradlew dockerPushNative
