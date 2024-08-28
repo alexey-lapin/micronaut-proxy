@@ -33,6 +33,7 @@ graalvmNative {
     toolchainDetection.set(true)
     binaries {
         named("main") {
+            imageName.set(rootProject.name)
             buildArgs.add("-H:-UseContainerSupport")
             buildArgs.add("--verbose")
         }
@@ -61,8 +62,8 @@ tasks {
         val namespace = System.getenv("CR_NAMESPACE")
         images.set(
             listOf(
-                "${registry}/${namespace}/${project.name}:latest",
-                "${registry}/${namespace}/${project.name}:${project.version}"
+                "${registry}/${namespace}/${rootProject.name}:latest",
+                "${registry}/${namespace}/${rootProject.name}:${project.version}"
             )
         )
     }
