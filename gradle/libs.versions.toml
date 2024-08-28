@@ -1,6 +1,6 @@
 [versions]
 jacoco = "0.8.7"
-micronaut = "4.5.1"
+micronaut = "4.6.0"
 micronaut-plugin = "4.4.2"
 release-plugin = "1.18.4"
 
