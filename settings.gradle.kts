@@ -9,3 +9,4 @@ plugins {
 }
 
 rootProject.name="micronaut-proxy"
+include("micronaut-proxy-app")

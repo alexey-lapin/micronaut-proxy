@@ -11,6 +11,7 @@ on:
       - '*'
 
 env:
+  APP_NAME: ${{ github.repository_name }}
   CR_REGISTRY: ghcr.io
   CR_NAMESPACE: ${{ github.repository_owner }}
   CR_USERNAME: ${{ github.actor }}
@@ -42,7 +43,7 @@ jobs:
         with:
           name: app-jar
           path: |
-            build/libs/micronaut-proxy*.jar
+            **/build/libs/${{ env.APP_NAME }}*-dist.jar
           retention-days: 7
 
   build-native:
@@ -85,8 +86,8 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: |
-            build/native/nativeCompile/micronaut-proxy*
-            build/native/nativeCompile/gradle-artifact.txt
+            **/build/native/nativeCompile/${{ env.APP_NAME }}*
+            **/build/native/nativeCompile/gradle-artifact.txt
 
   release-notes:
     runs-on: ubuntu-latest
@@ -101,22 +102,27 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
 
+      - name: Prepare Jar Artifacts
+        run: |
+          cd app-jar
+          mv *.jar $(basename *.jar -dist.jar).jar
+
       - name: Prepare Linux Artifacts
         run: |
           cd app-native-linux
-          chmod +x micronaut-proxy
-          tar -czf $(cat gradle-artifact.txt).tar.gz micronaut-proxy
+          chmod +x ${{ env.APP_NAME }}
+          tar -czf $(cat gradle-artifact.txt).tar.gz ${{ env.APP_NAME }}
 
       - name: Prepare macOS Artifacts
         run: |
           cd app-native-macos
-          chmod +x micronaut-proxy
-          tar -czf $(cat gradle-artifact.txt).tar.gz micronaut-proxy
+          chmod +x ${{ env.APP_NAME }}
+          tar -czf $(cat gradle-artifact.txt).tar.gz ${{ env.APP_NAME }}
 
       - name: Prepare Windows Artifacts
         run: |
           cd app-native-windows
-          zip $(cat gradle-artifact.txt).zip micronaut-proxy.exe
+          zip $(cat gradle-artifact.txt).zip ${{ env.APP_NAME }}.exe
 
       - name: Build Changelog
         uses: mikepenz/release-changelog-builder-action@v5
