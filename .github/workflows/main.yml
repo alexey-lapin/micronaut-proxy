@@ -11,7 +11,7 @@ on:
       - '*'
 
 env:
-  APP_NAME: ${{ github.repository_name }}
+  APP_NAME: ${{ github.event.repository.name }}
   CR_REGISTRY: ghcr.io
   CR_NAMESPACE: ${{ github.repository_owner }}
   CR_USERNAME: ${{ github.actor }}
