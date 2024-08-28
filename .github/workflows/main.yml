@@ -38,12 +38,19 @@ jobs:
       - name: Gradle build
         run: ./gradlew build
 
+      - name: Prepare Artifacts
+        run: |
+          mkdir /tmp/app-jar
+          cp **/build/libs/${{ env.APP_NAME }}*-dist.jar /tmp/app-jar
+          cd /tmp/app-jar
+          mv *.jar $(basename *.jar -dist.jar).jar
+
       - name: Upload app-jar
         uses: actions/upload-artifact@v4
         with:
           name: app-jar
           path: |
-            **/build/libs/${{ env.APP_NAME }}*-dist.jar
+            /tmp/app-jar/*.jar
           retention-days: 7
 
   build-native:
@@ -81,13 +88,18 @@ jobs:
       - name: Gradle nativeCompile
         run: ./gradlew nativeCompile -x check
 
+      - name: Prepare Artifacts
+        run: |
+          mkdir /tmp/${{ matrix.artifact }}
+          cp **/build/native/nativeCompile/${{ env.APP_NAME }}* /tmp/${{ matrix.artifact }}
+          cp **/build/native/nativeCompile/gradle-artifact.txt /tmp/${{ matrix.artifact }}
+
       - name: Upload app-native
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: |
-            **/build/native/nativeCompile/${{ env.APP_NAME }}*
-            **/build/native/nativeCompile/gradle-artifact.txt
+            /tmp/${{ matrix.artifact }}/*
 
   release-notes:
     runs-on: ubuntu-latest
@@ -101,11 +113,6 @@ jobs:
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4
-
-      - name: Prepare Jar Artifacts
-        run: |
-          cd app-jar
-          mv *.jar $(basename *.jar -dist.jar).jar
 
       - name: Prepare Linux Artifacts
         run: |
