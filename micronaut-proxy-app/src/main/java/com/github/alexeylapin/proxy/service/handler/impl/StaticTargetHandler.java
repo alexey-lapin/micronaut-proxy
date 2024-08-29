@@ -1,64 +1,55 @@
-package com.github.alexeylapin.proxy;
+package com.github.alexeylapin.proxy.service.handler.impl;
 
-import com.github.alexeylapin.proxy.config.MicronautProxyProperties;
-import com.github.alexeylapin.proxy.config.TargetProperties;
+import com.github.alexeylapin.proxy.config.handler.StaticTargetHandlerProperties;
+import com.github.alexeylapin.proxy.service.handler.Handler;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.util.AntPathMatcher;
+import io.micronaut.core.util.PathMatcher;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.MutableHttpResponse;
-import io.micronaut.http.annotation.Filter;
 import io.micronaut.http.client.ProxyHttpClient;
-import io.micronaut.http.filter.HttpServerFilter;
-import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-@Filter("/${micronaut-proxy.targeted-path}/**")
-public class ProxyFilter implements HttpServerFilter {
+public class StaticTargetHandler implements Handler {
 
-    private static final Logger log = LoggerFactory.getLogger(ProxyFilter.class);
-
+    private final StaticTargetHandlerProperties properties;
     private final ProxyHttpClient client;
-    private final Map<String, TargetProperties> targets;
-    private final MicronautProxyProperties micronautProxyProperties;
+    private final AntPathMatcher pathMatcher;
 
-    public ProxyFilter(ProxyHttpClient client,
-                       List<TargetProperties> targets,
-                       MicronautProxyProperties micronautProxyProperties) {
+    public StaticTargetHandler(StaticTargetHandlerProperties properties, ProxyHttpClient client) {
         this.client = client;
-        this.targets = targets.stream().collect(Collectors.toMap(TargetProperties::name, Function.identity()));
-        this.micronautProxyProperties = micronautProxyProperties;
-        log.info("targets: {}", this.targets);
+        this.properties = properties;
+        this.pathMatcher = PathMatcher.ANT;
     }
 
     @Override
-    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+    public boolean matches(HttpRequest<?> request) {
+        return pathMatcher.matches(properties.path(), request.getPath());
+    }
+
+    @Override
+    public Publisher<MutableHttpResponse<?>> handle(MutableHttpRequest<?> request) {
         return Publishers.map(handleRequest(request.mutate()), this::handleResponse);
     }
 
     private Publisher<MutableHttpResponse<?>> handleRequest(MutableHttpRequest<?> request) {
-        int length = micronautProxyProperties.targetedPath().length() + 1;
-        String targetedPath = request.getPath().substring(length);
-        String[] pathSegments = Arrays.stream(targetedPath.split("/"))
+        String targetedInfo = pathMatcher.extractPathWithinPattern(properties.path(), request.getPath());
+        String[] pathSegments = Arrays.stream(targetedInfo.split("/"))
                 .filter(s -> s != null && !s.isEmpty())
                 .toArray(String[]::new);
 
         String target = pathSegments[0];
-        TargetProperties targetProperties = targets.get(target);
+        StaticTargetHandlerProperties.TargetProperties targetProperties = properties.targets().get(target);
 
         if (targetProperties == null) {
-            return Mono.just(HttpResponse.notFound()
+            return Mono.just(HttpResponse.badRequest()
                     .body(new JsonError("Target " + target + " is not found")
                             .link(Link.SELF, Link.of(request.getUri()))));
         }
