@@ -2,7 +2,7 @@
 jacoco = "0.8.7"
 micronaut = "4.7.1"
 micronaut-plugin = "4.4.4"
-release-plugin = "1.18.15"
+release-plugin = "1.18.16"
 
 [libraries]
 # renovate hint
