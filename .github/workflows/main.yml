@@ -46,7 +46,7 @@ jobs:
           mv *.jar $(basename *.jar -dist.jar).jar
 
       - name: Upload app-jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: app-jar
           path: |
@@ -95,7 +95,7 @@ jobs:
           cp **/build/native/nativeCompile/gradle-artifact.txt /tmp/${{ matrix.artifact }}
 
       - name: Upload app-native
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact }}
           path: |
@@ -112,7 +112,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
 
       - name: Prepare Linux Artifacts
         run: |
