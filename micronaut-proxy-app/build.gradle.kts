@@ -34,7 +34,6 @@ graalvmNative {
     binaries {
         named("main") {
             imageName.set(rootProject.name)
-            buildArgs.add("-H:-UseContainerSupport")
             buildArgs.add("--verbose")
         }
     }
